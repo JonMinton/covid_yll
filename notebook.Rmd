@@ -1,0 +1,85 @@
+---
+title: "Estimating years of life lost in Scotland and the rest of the UK from Covid-19 under different scenarios"
+output: html_notebook
+---
+
+# Software prereqs 
+
+```{r}
+pacman::p_load(here, tidyverse, readxl)
+
+```
+
+
+# Background
+
+The aim of this document is to provide some reasonable estimates of the likely effect that a covid-19 outbreak will have on mortality in 2020 conditional on a range of assumptions. 
+
+This will involve comparing various 'covid' scenarios against a 'control' scenario, in terms of the numbers of deaths expected in the country at different ages. Some important key parameters: 
+
+* The ratio of true cases to confirmed cases 
+* The proportion of the population who will be infected in 2020. 
+* The hazard multiplier on age-sex specific mortality rates conditional on being a confirmed case. 
+
+Many of these are not known yet and so a range of different scenarios should be considered. 
+
+To start with we want the following data: 
+
+1. Age-sex population structure of Scotland and other UK nations in 2020 or recent year 
+2. Age-sex specific mortality rates (12 month hazards)
+
+Let's start with just Scotland. Soon we'll want to do for other countries and to create an app that would allow different populations to be selected. 
+
+# Scotland population structure 
+
+Let's use the 2018 lifetables from the ONS I used previously as part of the [Bayes Factor Slowdown](https://github.com/JonMinton/bayes_factor_slowdown/) repo.
+
+```{r}
+lifetables <- read_rds(here("data", "all_ons_lifetables_tidied.rds"))
+
+```
+
+
+For the last year, and for Scotland 
+
+```{r}
+lt_scotland <- 
+  lifetables %>% 
+    group_by(population) %>% 
+    filter(year == max(year)) %>% 
+    filter(population == "Scotland")
+```
+
+Now population structure for last year.
+
+I've downloaded the data from [here](https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/analysisofpopulationestimatestool) and put it in the data directory.  
+
+The data required are in the MYEB2 tab
+
+```{r}
+pop_uk <- 
+  read_excel(here("data", "theanalysisofpopulationestimatestool2018.xlsx"),
+             sheet = "MYEB2"
+             )
+```
+
+
+```{r}
+pop_uk %>% 
+  count(code)
+
+```
+
+This doesn't have Scotland! 
+
+For Scotland I'm going to use [this page](https://www.nrscotland.gov.uk/statistics-and-data/statistics/statistics-by-theme/population/population-estimates/mid-year-population-estimates/mid-2018) and [this file](https://www.nrscotland.gov.uk/files//statistics/population-estimates/mid-18/mid-year-pop-est-18-tabs.zip). The file is a zip file so I'm going to download it and save as before. 
+
+
+
+
+```{r}
+
+pop_scot <- read_csv("https://www.nrscotland.gov.uk/files//statistics/population-estimates/mid-18/mid-year-pop-est-18-tabs.zip")
+
+```
+
