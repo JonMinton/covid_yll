@@ -34,7 +34,7 @@ ui <- dashboardPage(
           label = "Select population of interest",
           choices = c("England", "Wales", "Scotland")
         ),
-        numericInput(
+        sliderInput(
           inputId = "true_prevalence", 
           label = "Select true prevalence (0 to 1)", 
           value = 0.6, min = 0, max = 1
@@ -54,6 +54,8 @@ ui <- dashboardPage(
           label = "Select mortality hazard for true but unconfirmed cases",
           value = 1.10, min = 0, max = 1000
         ),
+        checkboxInput("allow_shielding", "Allow shielding of 70+?"),
+        sliderInput("shielding_effectiveness", "Effectiveness of shielding (0 to 1)", min = 0, max = 1, value = 0),
         actionButton(
           "run", 
           "Click to run with selected parameters"
@@ -167,7 +169,26 @@ Note the latest available year for population structure and lifetables is 2018, 
          )
        
        
+         ),
+column(width = 12,
+       box(
+         title = "Shielding rate",
+         HTML(
+"
+The scenario tool includes an option to look at scenarios in which persons aged 70 and over are 'shielded' from 
+the full infection rate affecting the rest of the population. If the checkbox is ticked, the share of the infected population
+for persons aged 70 and over is reduced by the shielding rate specified in the slider above. As the baseline 
+mortality hazard increases exponentially with age (from around age 30) effective shielding can therefore disproportionately
+reduce the number of expected deaths from SARS-CoV-2.
+<br>
+Note that in shielding scenarios the overall population prevalence will now be below that specified by the user. 
+
+"
          )
+       )
+       
+       
+)
 
 
                         )
@@ -193,17 +214,56 @@ server <- function(input, output) {
       }
     )
   
+    observeEvent(
+      input$run,
+      {
+        R_d               <- input$ratio_true_conf
+        P_r               <- input$true_prevalence
+        Sh_r              <- input$shielding_effectiveness 
+        
+        U_n               <- 1 - P_r # Uninfected 
+        S_y               <- P_r / (1 + R_d) # Symptomatic (confirmed) share
+        A_s               <- P_r * R_d / (1 + R_d) # Asymptomatic (unconfirmed) share
+        
+        P_r_sh            <- Sh_r * P_r # Prevalence in shielded
+        
+        U_n_sh            <- 1 - P_r_sh # Uninfected in shielded
+        S_y_sh            <- P_r_sh / (1 + R_d)  # Symptomatic (confirmed) share in shielded
+        A_s_sh            <- P_r_sh * R_d / (1 + R_d) # Asymptomatic (unconfirmed) share in shielded
+        
+        print(glue("Inputs: R_d: {R_d}; P_r: {P_r}; Sh_r: {Sh_r}"))
+        
+        print(glue("Unshielded: U_n: {U_n}; S_y: {S_y}; A_s: {A_s} (Sum: {U_n + S_y + A_s})"))
+        print(glue("Shielded: U_n_sh: {U_n_sh}; S_y_sh: {S_y_sh}; A_s_sh: {A_s_sh} (sum: {U_n_sh + S_y_sh + A_s_sh})"))
+      }
+    )
    calc_adj_lt <- eventReactive(
      input$run,
      {
-       dta %>% 
-         filter(population == input$population)  %>%
-         adjust_Mx(
-           truePrevalence       = input$true_prevalence,
-           ratioTrueToConfirmed = input$ratio_true_conf,
-           hrConfirmed          = input$hr_confirmed,
-           hrUnconfirmed        = input$hr_unconfirmed
-          )
+
+       if(!input$allow_shielding){
+         out <-
+           dta %>% 
+           filter(population == input$population)  %>%
+           adjust_Mx(
+             P_r       = input$true_prevalence,
+             R_d       = input$ratio_true_conf,
+             HR_S_y    = input$hr_confirmed,
+             HR_A_s    = input$hr_unconfirmed
+           )
+       } else {
+         out <-
+           dta %>% 
+           filter(population == input$population)  %>%
+           adjust_Mx(
+             P_r       = input$true_prevalence,
+             R_d       = input$ratio_true_conf,
+             HR_S_y    = input$hr_confirmed,
+             HR_A_s    = input$hr_unconfirmed,
+             Sh_r      = input$shielding_effectiveness
+           )
+       }
+       return(out)
      }
   )
   
