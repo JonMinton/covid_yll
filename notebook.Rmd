@@ -75,11 +75,124 @@ This doesn't have Scotland!
 For Scotland I'm going to use [this page](https://www.nrscotland.gov.uk/statistics-and-data/statistics/statistics-by-theme/population/population-estimates/mid-year-population-estimates/mid-2018) and [this file](https://www.nrscotland.gov.uk/files//statistics/population-estimates/mid-18/mid-year-pop-est-18-tabs.zip). The file is a zip file so I'm going to download it and save as before. 
 
 
+Update: now going to use [the resource I used](https://www.opendata.nhs.scot/dataset/7f010430-6ce1-4813-b25c-f7f335bdc4dc/resource/c505f490-c201-44bd-abd1-1bd7a64285ee/download/dz2011-pop-est_30082019.csv) for the geovariation project 
 
 
 ```{r}
 
-pop_scot <- read_csv("https://www.nrscotland.gov.uk/files//statistics/population-estimates/mid-18/mid-year-pop-est-18-tabs.zip")
+pop_scot_loc <- "https://www.opendata.nhs.scot/dataset/7f010430-6ce1-4813-b25c-f7f335bdc4dc/resource/c505f490-c201-44bd-abd1-1bd7a64285ee/download/dz2011-pop-est_30082019.csv"
+(dta_scot <- read_csv(pop_scot_loc))
 
 ```
+
+```{r}
+(
+dta_scot_2018 <- 
+  dta_scot %>% 
+    set_names(nm = tolower(names(.))) %>% 
+    mutate(sex = tolower(sex)) %>% 
+    filter(dz2011 == "S92000003") %>% 
+    filter(year == max(year)) %>% 
+    select(-allages, -dz2011, -dz2011qf, -year) %>% 
+    gather(key = "age", value = N,  -sex) %>% 
+    mutate(age = str_remove(age, "^age") %>% str_remove("plus$") %>% as.numeric()) 
+)
+```
+
+So this gives the number of people at each age and sex in Scotland. 
+
+With these two pieces of information we can start to produce estimates of the numbers of expected deaths under 2018 mortality hazards, and for a range of covid scenarios. 
+
+Baseline expected deaths 
+
+```{r}
+
+lt_scotland %>% 
+  select(x, sex, mx) %>% 
+  inner_join(dta_scot_2018, by = c("x" = "age", "sex" = "sex")) %>%
+  ungroup() %>% 
+  select(-population) %>% 
+  mutate(n_control = mx * N)
+```
+
+Now to produce a function for various scenarios
+
+```{r}
+adjust_Mx <- function(df, truePrevalence, ratioTrueToConfirmed, hrConfirmed, hrUnconfirmed = 1){
+  
+  share_uninfected  <- 1 - truePrevalence
+  share_confirmed   <- truePrevalence / ratioTrueToConfirmed
+  share_unconfirmed <- 1 - share_uninfected - share_confirmed
+  
+  df %>% 
+    mutate(mx_adjusted = 
+      (mx * share_uninfected)                    + 
+      ((mx * hrUnconfirmed) * share_unconfirmed) +
+      ((mx * hrConfirmed)   * share_confirmed)
+  ) %>% 
+  mutate(
+    n_control = mx * N,
+    n_covid = mx_adjusted * N
+  )
+}
+
+
+
+```
+
+
+Let's try this with an HR conditional on confirmed covid of 2.0, a 60% prevalence, and a 10:1 ratio of unconfirmed to true cases 
+
+```{r}
+(df_firstscenario <-
+  lt_scotland %>% 
+    select(x, sex, mx) %>% 
+    inner_join(dta_scot_2018, by = c("x" = "age", "sex" = "sex")) %>%
+    ungroup() %>% 
+    select(-population) %>% 
+    adjust_Mx(truePrevalence = 0.6, hrConfirmed = 2.0, ratioTrueToConfirmed = 10)
+)
+```
+
+Now a suitable visualisation 
+
+```{r}
+df_cumulative <- 
+  df_firstscenario %>% 
+    group_by(sex) %>% 
+    arrange(x) %>% 
+    mutate(
+      cumulative_n_control = cumsum(n_control),
+      cumulative_n_covid   = cumsum(n_covid)
+    ) %>% 
+    ungroup() %>% 
+    mutate(
+      cumulative_diff = cumulative_n_covid - cumulative_n_control
+    ) %>% 
+    select(x, sex, cumulative_n_control, cumulative_n_covid, cumulative_diff) %>% 
+    gather(-x, -sex, key = "key", value = "n") %>% 
+    mutate(key = factor(key, levels = c("cumulative_n_control", "cumulative_n_covid", "cumulative_diff")))
+
+df_cumulative %>% 
+  ggplot(aes(x = x, y = n, group = key , colour = key, shape = key)) + 
+  facet_wrap(~ sex) + 
+  geom_line() +
+  labs(x = "Age in single years", y = "Number of deaths")
+
+df_cumulative %>% 
+  group_by(sex) %>% 
+  filter(x == max(x)) %>% 
+  select(-x) %>% 
+  spread(key, n)
+
+```
+
+Let's now build a simple app for looking at different scenarios
+
+Populations:
+
+* Scotland
+* Wales
+* England 
+
 
