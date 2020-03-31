@@ -219,7 +219,7 @@ server <- function(input, output) {
       {
         R_d               <- input$ratio_true_conf
         P_r               <- input$true_prevalence
-        Sh_r              <- input$shielding_effectiveness 
+        Sh_r              <- 1 - input$shielding_effectiveness 
         
         U_n               <- 1 - P_r # Uninfected 
         S_y               <- P_r / (1 + R_d) # Symptomatic (confirmed) share
@@ -260,7 +260,7 @@ server <- function(input, output) {
              R_d       = input$ratio_true_conf,
              HR_S_y    = input$hr_confirmed,
              HR_A_s    = input$hr_unconfirmed,
-             Sh_r      = input$shielding_effectiveness
+             Sh_r      = 1 - input$shielding_effectiveness
            )
        }
        return(out)
