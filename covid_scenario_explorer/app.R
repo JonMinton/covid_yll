@@ -234,7 +234,7 @@ server <- function(input, output) {
         print(glue("Inputs: R_d: {R_d}; P_r: {P_r}; Sh_r: {Sh_r}"))
         
         print(glue("Unshielded: U_n: {U_n}; S_y: {S_y}; A_s: {A_s} (Sum: {U_n + S_y + A_s})"))
-        print(glue("Shielded: U_n_sh: {U_n_sh}; S_y_sh: {S_y_sh}; A_s_sh: {A_s_sh} (sum: {U_n_sh + S_y_sh + A_s_sh})"))
+        print(glue("Shielded: U_n_sh: {U_n_sh}; S_y_sh: {S_y_sh}; A_s_sh: {A_s_sh} (Sum: {U_n_sh + S_y_sh + A_s_sh})"))
       }
     )
    calc_adj_lt <- eventReactive(
