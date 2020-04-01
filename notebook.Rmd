@@ -35,7 +35,7 @@ Let's start with just Scotland. Soon we'll want to do for other countries and to
 Let's use the 2018 lifetables from the ONS I used previously as part of the [Bayes Factor Slowdown](https://github.com/JonMinton/bayes_factor_slowdown/) repo.
 
 ```{r}
-lifetables <- read_rds(here("data", "all_ons_lifetables_tidied.rds"))
+lifetables <- read_rds(here("data", "lifetables", "all_ons_lifetables_tidied.rds"))
 
 ```
 
