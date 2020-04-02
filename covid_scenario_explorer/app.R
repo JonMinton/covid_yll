@@ -32,7 +32,7 @@ ui <- dashboardPage(
         selectInput(
           inputId = "population", 
           label = "Select population of interest",
-          choices = c("England", "Wales", "Scotland")
+          choices = c("England", "Wales", "Scotland", "Northern Ireland")
         ),
         sliderInput(
           inputId = "true_prevalence", 
@@ -161,6 +161,8 @@ column(width = 12,
   <li><b><a href = 'https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/lifeexpectancies/datasets/singleyearlifetablesuk1980to2018'>Lifetables for England, Wales, and Scotland</a></b></li>
   <li><b><a href = '(https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/analysisofpopulationestimatestool'>Population structure for England and Wales</a></b></li>
   <li><b><a href = 'https://www.opendata.nhs.scot/dataset/7f010430-6ce1-4813-b25c-f7f335bdc4dc/resource/c505f490-c201-44bd-abd1-1bd7a64285ee/download/dz2011-pop-est_30082019.csv'>Population structure for Scotland</a></b></li>
+  <li><b><a href = 'https://www.nisra.gov.uk/publications/2018-mid-year-population-estimates-northern-ireland'>Population structure for Northern Ireland</a></b></li>
+
 </ul>
 <br><br>
 Note the latest available year for population structure and lifetables is 2018, so this is what was used.

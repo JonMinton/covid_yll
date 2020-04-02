@@ -80,21 +80,45 @@ pop_scot_loc <- "https://www.opendata.nhs.scot/dataset/7f010430-6ce1-4813-b25c-f
 )
 
 
-#Now to bind 
+# And Northern Ireland 
+
+
+pop_ni_tidy <- read_excel(
+  here("data", "population", "MYE18_SYA.xlsx"), 
+  sheet = "Flat"
+) %>% 
+  filter(area == "1. Northern Ireland") %>% 
+  filter(year == max(year))  %>% 
+  #  count(gender) %>% 
+  mutate(
+    sex = case_when(
+      gender == "Males"        ~ "male",
+      gender == "Females"      ~ "female",
+      TRUE                     ~ NA_character_
+    )
+  ) %>% 
+  filter(!is.na(sex)) %>%
+  mutate(population = "Northern Ireland") %>% 
+  select(population, age, sex, N = MYE)
+
+
+
 (
   pop_struct <- 
     bind_rows(
       dta_scot_2018,
-      pop_ew_tidy
+      pop_ew_tidy,
+      pop_ni_tidy
     )
 )
 
-# Now to joint to lifetable
 
-pop_struct 
+
+# Now to join to lifetable
+
 
 pop_mx %>% 
   rename(age = x) %>% 
-  filter(population %in% c("England", "Wales", "Scotland")) %>% 
+  filter(population %in% c("England", "Wales", "Scotland", "Northern Ireland")) %>% 
   inner_join(pop_struct) %>% 
   write_rds(path = here("covid_scenario_explorer", "data", "mx_and_N.rds"))

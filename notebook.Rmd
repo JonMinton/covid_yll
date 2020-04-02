@@ -115,6 +115,35 @@ lt_scotland %>%
   mutate(n_control = mx * N)
 ```
 
+Northern Ireland
+
+[This](https://www.nisra.gov.uk/publications/2018-mid-year-population-estimates-northern-ireland) website appears to have it. I've downloaded the excel file to data/population (MYE18_SYA.xlsx).
+
+```{r}
+(
+  ni_pop <- read_excel(here("data", "population", "MYE18_SYA.xlsx"), sheet = "Flat")
+)
+```
+
+```{r}
+
+ni_pop %>% 
+  filter(area == "1. Northern Ireland") %>% 
+  filter(year == max(year))  %>% 
+#  count(gender) %>% 
+  mutate(
+    sex = case_when(
+      gender == "Males"        ~ "male",
+      gender == "Females"      ~ "female",
+      TRUE                     ~ NA_character_
+    )
+  ) %>% 
+  filter(!is.na(sex)) %>% 
+  select(sex, age, N = MYE)
+
+```
+
+
 Now to produce a function for various scenarios
 
 ```{r}
