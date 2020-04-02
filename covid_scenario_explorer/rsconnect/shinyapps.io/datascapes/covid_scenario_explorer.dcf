@@ -5,8 +5,8 @@ account: datascapes
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 2026793
-bundleId: 2949336
+bundleId: 2958530
 url: https://datascapes.shinyapps.io/covid_scenario_explorer/
-when: 1585667829.93746
+when: 1585823206.54227
 asMultiple: FALSE
 asStatic: FALSE
